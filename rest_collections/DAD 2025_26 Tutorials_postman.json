@@ -1,0 +1,364 @@
+{
+  "info": {
+    "name": "DAD - Project",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Games",
+      "item": [
+        {
+          "name": "Get Games",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "",
+            "url": {
+              "raw": "{{url}}/games",
+              "protocol": "",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "games"
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        },
+        {
+          "name": "Get Games Filter Type",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "",
+            "url": {
+              "raw": "{{url}}/games?type=9",
+              "protocol": "",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "games?type=9"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "9"
+                }
+              ],
+              "variable": []
+            }
+          }
+        },
+        {
+          "name": "Get Games Filter Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "",
+            "url": {
+              "raw": "{{url}}/games?status=Ended",
+              "protocol": "",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "games?status=Ended"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "Ended"
+                }
+              ],
+              "variable": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments API (external)",
+      "item": [
+        {
+          "name": "Metadata",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "",
+            "url": {
+              "raw": "https://dad-payments-api.vercel.app/api/",
+              "protocol": "https",
+              "host": [
+                "dad-payments-api",
+                "vercel",
+                "app"
+              ],
+              "path": [
+                "api",
+                ""
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        },
+        {
+          "name": "POST Debit",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "",
+            "url": {
+              "raw": "https://dad-payments-api.vercel.app/api/debit",
+              "protocol": "https",
+              "host": [
+                "dad-payments-api",
+                "vercel",
+                "app"
+              ],
+              "path": [
+                "api",
+                "debit"
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login PB",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "",
+            "url": {
+              "raw": "{{url}}/login",
+              "protocol": "",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "login"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\":\"pb@mail.pt\",\n  \"password\":\"123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {},
+                "exec": [
+                  "const data = res.getBody();",
+                  "",
+                  "const token = data.token; ",
+                  "",
+                  "bru.setEnvVar(\"token\", token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login PA",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "",
+            "url": {
+              "raw": "{{url}}/login",
+              "protocol": "",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "login"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\":\"pa@mail.pt\",\n  \"password\":\"123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {},
+                "exec": [
+                  "const data = res.getBody();",
+                  "",
+                  "const token = data.token; ",
+                  "",
+                  "bru.setEnvVar(\"token\", token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "",
+            "url": {
+              "raw": "{{url}}/users/me",
+              "protocol": "",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "users",
+                "me"
+              ],
+              "query": [],
+              "variable": []
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {},
+                "exec": [
+                  "const data = res.getBody();",
+                  "",
+                  "const user_id = data.id; ",
+                  "",
+                  "bru.setEnvVar(\"user_id\", user_id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "",
+            "url": {
+              "raw": "{{url}}/logout",
+              "protocol": "",
+              "host": [
+                "{{url}}"
+              ],
+              "path": [
+                "logout"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {},
+                "exec": [
+                  "bru.setEnvVar(\"token\", \"\");"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "url",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "default"
+    }
+  ]
+}
