@@ -33,6 +33,14 @@ return new class extends Migration
 
             // custom data
             $table->json('custom')->nullable();
+
+            // --- NOVO: ESTATÍSTICAS E CUSTOMIZAÇÃO ---
+            $table->integer('capote_count')->default(0);
+            $table->integer('bandeira_count')->default(0);
+
+            // O que o jogador tem equipado (Persistência)
+            $table->string('current_deck')->default('deck1_preview');
+            $table->string('current_avatar')->default('default_avatar');
         });
 
         // NOTE: Only multiplayer matches are registered
@@ -233,6 +241,50 @@ return new class extends Migration
             // custom data
             $table->json('custom')->nullable();
         });
+
+        // --- NOVO: TABELAS DA LOJA ---
+
+        // 1. Itens disponíveis na loja
+        Schema::create('shop_items', function (Blueprint $table) {
+            $table->id();
+            $table->enum('type', ['deck', 'avatar']);
+            $table->string('name');
+            // 'resource_name' tem de ser único para servir de chave estrangeira
+            $table->string('resource_name')->unique();
+            $table->integer('price')->default(0);
+        });
+
+        // 2. Inventário dos jogadores
+        Schema::create('user_inventory', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('user_id');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+
+            // Ligamos ao 'resource_name' do item (ex: 'deck_fire')
+            $table->string('item_resource_name');
+            $table->foreign('item_resource_name')->references('resource_name')->on('shop_items')->onDelete('cascade');
+
+            $table->timestamp('purchase_date')->useCurrent();
+
+            // Impede comprar o mesmo item duas vezes
+            $table->unique(['user_id', 'item_resource_name']);
+        });
+
+        // --- NOVO: POPULAR A LOJA ---
+        DB::table('shop_items')->insert([
+            // Decks
+            ['type' => 'deck', 'name' => 'Deck Clássico', 'resource_name' => 'deck1_preview', 'price' => 0],
+            ['type' => 'deck', 'name' => 'Deck DAD', 'resource_name' => 'deck2_preview', 'price' => 50],
+            //colocar mais decks no futuro
+
+            // Avatares
+            ['type' => 'avatar', 'name' => 'Avatar Base', 'resource_name' => 'default_avatar', 'price' => 0],
+            ['type' => 'avatar', 'name' => 'Winter Girl', 'resource_name' => 'avatar2', 'price' => 30],
+            ['type' => 'avatar', 'name' => 'Cool Girl', 'resource_name' => 'avatar3', 'price' => 60],
+            ['type' => 'avatar', 'name' => 'Beard Guy', 'resource_name' => 'avatar4', 'price' => 30],
+            ['type' => 'avatar', 'name' => 'Bald Guy', 'resource_name' => 'avatar5', 'price' => 10],
+            ['type' => 'avatar', 'name' => 'Guy', 'resource_name' => 'avatar6', 'price' => 90],
+        ]);
     }
     /**
      * Reverse the migrations.
@@ -245,6 +297,10 @@ return new class extends Migration
         Schema::drop('games');
         Schema::drop('matches');
 
+        // --- NOVO ---
+        Schema::dropIfExists('user_inventory');
+        Schema::dropIfExists('shop_items');
+
         Schema::table('users', function (Blueprint $table) {
             $table->dropColumn('deleted_at');
             $table->dropColumn('custom');
@@ -253,6 +309,11 @@ return new class extends Migration
             $table->dropColumn('blocked');
             $table->dropColumn('nickname');
             $table->dropColumn('type');
+            //$table->dropColumn(['capote_count', 'bandeira_count', 'current_deck', 'current_avatar']);
+            $table->dropColumn('capote_count');
+            $table->dropColumn('bandeira_count');
+            $table->dropColumn('current_deck');
+            $table->dropColumn('current_avatar');
         });
     }
 };
