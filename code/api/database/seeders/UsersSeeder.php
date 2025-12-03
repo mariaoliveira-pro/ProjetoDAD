@@ -32,7 +32,8 @@ class UsersSeeder extends Seeder
         ['type' => 'P', 'name' => 'Player D', 'email' => 'pd@mail.pt', 'gender' => 'M', 'softdelete' => true],
         ['type' => 'P', 'name' => 'Player E', 'email' => 'pe@mail.pt', 'gender' => 'F', 'softdelete' => false],
         ['type' => 'P', 'name' => 'Player F', 'email' => 'pf@mail.pt', 'gender' => 'M', 'softdelete' => true],
-
+        
+        ['type' => 'P', 'name' => 'Bisca Bot', 'email' => 'bot@bisca.pt', 'gender' => 'M', 'softdelete' => false, 'nickname' => 'Bot Jamal'],
         // O teu user de teste (para teres a certeza que existe na lista fixa)
         ['type' => 'P', 'name' => 'Aluno Teste', 'email' => 'aluno@ipleiria.pt', 'gender' => 'M', 'softdelete' => false],
         ['type'=> 'P', 'name' => 'Jogador Pobre', 'email'=> 'pobre@ipleiria.pt', 'gender' => 'M', 'softdelete'=> false],
