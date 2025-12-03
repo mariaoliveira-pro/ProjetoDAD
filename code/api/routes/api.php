@@ -39,3 +39,8 @@ Route::get('/users/inventory', [InventoryController::class, 'index']);
 // Rota para Fim de Jogo (Escrever dados e dar moedas)
 Route::post('/matches/end', [MatchController::class, 'endMatch']);
 
+Route::post('/matches/start', [MatchController::class, 'startMatch']);
+
+Route::get('/matches', [MatchController::class, 'index']);
+
+
