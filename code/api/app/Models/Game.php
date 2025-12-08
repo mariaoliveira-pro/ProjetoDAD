@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Game extends Model
 {
-    public $timestamps = false; 
+    public $timestamps = false;
 
     protected $fillable = [
         'type',
@@ -16,7 +16,7 @@ class Game extends Model
         'winner_user_id',
         'loser_user_id',
         'is_draw',
-        'match_id', 
+        'match_id',
         'began_at',
         'ended_at',
         'total_time',

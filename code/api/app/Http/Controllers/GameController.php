@@ -86,11 +86,12 @@ class GameController extends Controller
     {
         // 1. Validar os dados que vêm do Android
         $request->validate([
-            'email' => 'required|email',
-            'player1_points' => 'required|integer', // Os teus pontos
-            'player2_points' => 'required|integer', // Pontos do Bot
-            'duration' => 'required|integer',       // Duração em segundos
-            'match_id' => 'nullable|exists:matches,id' // Opcional: se fizer parte de um Match
+            'email'          => 'required|email',
+            'player1_points' => 'required|integer',
+            'player2_points' => 'required|integer',
+            'duration'       => 'required|integer',
+            'match_id'       => 'nullable|exists:matches,id',
+            'moves'          => 'nullable|array' // <--- NOVA VALIDAÇÃO PARA AS VAZAS
         ]);
 
         // 2. Identificar o Utilizador e o Bot
@@ -98,19 +99,19 @@ class GameController extends Controller
         if (!$user) {
             return response()->json(['error' => 'User not found'], 404);
         }
-        
-        $botUser = User::where('email', "bot@bisca.pt")->first();
-    
+
+        // Verifica se o bot existe (podes usar o email que tens na BD)
+        $botUser = User::where('email', "bot@bisca.pt")->first(); // ou bot@mail.pt conforme tenhas
         if (!$botUser) {
-            return response()->json(['error' => 'Bot configuration missing'], 500);
+            // Fallback: Tenta encontrar pelo ID ou cria (opcional, mas evita erros 500)
+             return response()->json(['error' => 'Bot configuration missing'], 500);
         }
-        
         $botId = $botUser->id;
 
         // 3. Calcular Vencedor e Perdedor
         $p1Score = $request->player1_points;
         $p2Score = $request->player2_points;
-        
+
         $winnerId = null;
         $loserId = null;
         $isDraw = 0;
@@ -122,33 +123,65 @@ class GameController extends Controller
             $winnerId = $botId;
             $loserId = $user->id;
         } else {
-            $isDraw = 1; // Empate
+            $isDraw = 1;
         }
 
-        // 4. Criar o Registo na Tabela
+        // 4. Guardar Jogo e Vazas (Transação)
         try {
-            $game = Game::create([
-                'type' => '9', // Bisca de 3 (Padrão)
-                'status' => 'Ended', // O jogo já acabou
-                'player1_user_id' => $user->id,
-                'player2_user_id' => $botId,
-                'match_id' => $request->match_id, // Se não enviares nada, fica NULL
-                'winner_user_id' => $winnerId,
-                'loser_user_id' => $loserId,
-                'is_draw' => $isDraw,
-                'player1_points' => $p1Score,
-                'player2_points' => $p2Score,
-                'total_time' => $request->duration,
-                'ended_at' => now(),
-                'began_at' => now()->subSeconds($request->duration) // Calcula o início baseado na duração
-            ]);
+            // Usamos DB::transaction para garantir que grava Jogo + Vazas ou nada
+            $gameId = DB::transaction(function () use ($request, $user, $botId, $winnerId, $loserId, $isDraw, $p1Score, $p2Score) {
+
+                // A. Criar o Registo na Tabela GAMES
+                // Nota: Game::create retorna o objeto, guardamos na variável $game
+                $game = Game::create([
+                    'type'            => '9',
+                    'status'          => 'Ended',
+                    'player1_user_id' => $user->id,
+                    'player2_user_id' => $botId,
+                    'match_id'        => $request->match_id,
+                    'winner_user_id'  => $winnerId,
+                    'loser_user_id'   => $loserId,
+                    'is_draw'         => $isDraw,
+                    'player1_points'  => $p1Score,
+                    'player2_points'  => $p2Score,
+                    'total_time'      => $request->duration,
+                    'ended_at'        => now(),
+                    'began_at'        => now()->subSeconds($request->duration)
+                ]);
+
+                // B. Salvar as VAZAS na tabela GAME_MOVES
+                if ($request->has('moves') && is_array($request->moves)) {
+                    $movesData = [];
+
+                    foreach ($request->moves as $move) {
+                        $movesData[] = [
+                            'game_id'       => $game->id,        // <--- Liga ao ID do jogo criado em cima
+                            'round_number'  => $move['round'],   // Vem do Android
+                            'player_card'   => $move['p_card'],  // ex: "ac"
+                            'bot_card'      => $move['b_card'],  // ex: "7o"
+                            'winner'        => $move['winner'],  // "player" ou "bot"
+                            'points_earned' => $move['points'],
+                            'created_at'    => now(),
+                            'updated_at'    => now()
+                        ];
+                    }
+
+                    // Inserir todas as vazas de uma vez
+                    if (count($movesData) > 0) {
+                        DB::table('game_moves')->insert($movesData);
+                    }
+                }
+
+                return $game->id; // Retorna o ID para usar na resposta
+            });
 
             return response()->json([
-                'message' => 'Game saved successfully',
-                'game_id' => $game->id
+                'message' => 'Game saved successfully with history',
+                'game_id' => $gameId
             ], 201);
 
         } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("SaveGame Error: " . $e->getMessage());
             return response()->json(['error' => 'Erro ao guardar jogo: ' . $e->getMessage()], 500);
         }
     }

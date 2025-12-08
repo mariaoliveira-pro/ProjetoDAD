@@ -20,7 +20,8 @@ class MatchController extends Controller
             'duration'     => 'required|numeric',
             'score'        => 'nullable|integer',
             'has_capote'   => 'required|boolean', // <-- Obrigatório agora
-            'has_bandeira' => 'required|boolean'  // <-- Obrigatório agora
+            'has_bandeira' => 'required|boolean',  // <-- Obrigatório agora
+            'moves' => 'nullable|array'
         ]);
 
         // 2. Buscar Jogo
@@ -101,7 +102,7 @@ class MatchController extends Controller
             });
 
             return response()->json([
-                'message' => 'Match saved',
+                'message' => 'Match saved with history',
                 'coins_earned' => $coinsTotal
             ], 200);
 
@@ -197,6 +198,69 @@ class MatchController extends Controller
         }
 
         return response()->json(['matches' => $matches], 200);
+    }
+
+    // POST /api/matches/undo
+    public function undoPlay(Request $request)
+    {
+        // 1. Validar inputs
+        $request->validate([
+            'email'    => 'required|email',
+            'match_id' => 'required|integer|exists:matches,id', // Garante que o match existe na BD
+            'cost'     => 'required|integer|in:5,10,15'         // Segurança: Só aceita os valores da regra (5, 10, 15)
+        ]);
+
+        // 2. Buscar Utilizador
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
+        // 3. Verificar Saldo
+        if ($user->coins_balance < $request->cost) {
+            return response()->json([
+                'message' => 'Saldo insuficiente',
+                'current_balance' => $user->coins_balance
+            ], 403);
+        }
+
+        try {
+            // 4. Executar Transação Atómica
+            DB::transaction(function () use ($user, $request) {
+
+                // A. Debitar moedas do utilizador
+                // O método decrement é mais atómico e seguro
+                $user->decrement('coins_balance', $request->cost);
+
+                // B. Registar na tabela de transações
+                // Assumimos que o TYPE ID 4 é para "Undo/Retirar Carta" (Ajusta se for outro ID na tua BD)
+                DB::table('coin_transactions')->insert([
+                    'user_id'                  => $user->id,
+                    'match_id'                 => $request->match_id,
+                    'coin_transaction_type_id' => 4,
+                    'coins'                    => -($request->cost), // Garante que fica negativo na BD
+                    'transaction_datetime'     => now(),
+                    'custom'                   => json_encode([
+                        'type' => 'undo_play',
+                        'cost' => $request->cost,
+                        'description' => 'Player retried a move'
+                    ])
+                ]);
+            });
+
+            // 5. Retornar sucesso e o novo saldo atualizado
+            return response()->json([
+                'message'     => 'Undo successful',
+                'new_balance' => $user->fresh()->coins_balance // fresh() garante que pega o valor atualizado da BD
+            ], 200);
+
+        } catch (\Exception $e) {
+            // Log do erro para debug
+            \Illuminate\Support\Facades\Log::error("UndoPlay Error: " . $e->getMessage());
+
+            return response()->json(['error' => 'Server error processing undo'], 500);
+        }
     }
 
 

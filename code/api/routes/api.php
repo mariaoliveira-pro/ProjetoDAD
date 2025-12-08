@@ -43,4 +43,6 @@ Route::post('/matches/start', [MatchController::class, 'startMatch']);
 
 Route::get('/matches', [MatchController::class, 'index']);
 
+Route::post('/users/equip', [InventoryController::class, 'equip']);
 
+Route::post('/matches/undo', [MatchController::class, 'undoPlay']);
