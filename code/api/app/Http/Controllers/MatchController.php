@@ -1,12 +1,11 @@
 <?php
-
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\User;
+use App\Models\Game;
 use App\Models\MatchGame;
+use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
 
 class MatchController extends Controller
 {
@@ -20,22 +19,27 @@ class MatchController extends Controller
             'duration'     => 'required|numeric',
             'score'        => 'nullable|integer',
             'has_capote'   => 'required|boolean', // <-- Obrigatório agora
-            'has_bandeira' => 'required|boolean',  // <-- Obrigatório agora
-            'moves' => 'nullable|array'
+            'has_bandeira' => 'required|boolean', // <-- Obrigatório agora
+            'moves'        => 'nullable|array',
         ]);
 
         // 2. Buscar Jogo
         $match = \App\Models\MatchGame::find($request->match_id);
-        if (!$match) return response()->json(['message' => 'Not found'], 404);
-        if ($match->status === 'Ended') return response()->json(['message' => 'Finished'], 200);
+        if (! $match) {
+            return response()->json(['message' => 'Not found'], 404);
+        }
+
+        if ($match->status === 'Ended') {
+            return response()->json(['message' => 'Finished'], 200);
+        }
 
         // 3. Preparar Variáveis
-        $winnerId = null;
-        $loserId = null;
+        $winnerId   = null;
+        $loserId    = null;
         $coinsTotal = 0;
 
         // Flags para a DB
-        $updateCapoteCount = false;
+        $updateCapoteCount   = false;
         $updateBandeiraCount = false;
 
         if ($request->result === 'win') {
@@ -45,14 +49,13 @@ class MatchController extends Controller
             $p1Marks = 4;
             $p2Marks = $match->player2_marks;
 
-            // --- LÓGICA DE RECOMPENSAS (Agora baseada nos teus booleanos) ---
+                              // --- LÓGICA DE RECOMPENSAS (Agora baseada nos teus booleanos) ---
             $coinsTotal = 50; // Base Reward
 
             if ($request->boolean('has_bandeira')) {
                 $coinsTotal += 30; // Bónus Bandeira
                 $updateBandeiraCount = true;
-            }
-            elseif ($request->boolean('has_capote')) {
+            } elseif ($request->boolean('has_capote')) {
                 $coinsTotal += 20; // Bónus Capote
                 $updateCapoteCount = true;
             }
@@ -61,8 +64,8 @@ class MatchController extends Controller
             // Bot ganhou
             $winnerId = $match->player2_user_id;
             $loserId  = $match->player1_user_id;
-            $p1Marks = $match->player1_marks;
-            $p2Marks = 4;
+            $p1Marks  = $match->player1_marks;
+            $p2Marks  = 4;
         }
 
         try {
@@ -70,15 +73,15 @@ class MatchController extends Controller
 
                 // A. Update Match
                 DB::table('matches')->where('id', $match->id)->update([
-                    'status' => 'Ended',
+                    'status'         => 'Ended',
                     'winner_user_id' => $winnerId,
-                    'loser_user_id' => $loserId,
-                    'ended_at' => now(),
-                    'total_time' => $request->duration,
-                    'player1_marks' => $p1Marks,
-                    'player2_marks' => $p2Marks,
+                    'loser_user_id'  => $loserId,
+                    'ended_at'       => now(),
+                    'total_time'     => $request->duration,
+                    'player1_marks'  => $p1Marks,
+                    'player2_marks'  => $p2Marks,
                     'player1_points' => $request->score,
-                    'coins_reward' => $coinsTotal
+                    'coins_reward'   => $coinsTotal,
                 ]);
 
                 // B. Update User & Transactions (Se o humano ganhou)
@@ -86,29 +89,35 @@ class MatchController extends Controller
 
                     // Transação
                     DB::table('coin_transactions')->insert([
-                        'user_id' => $winnerId,
-                        'match_id' => $match->id,
+                        'user_id'                  => $winnerId,
+                        'match_id'                 => $match->id,
                         'coin_transaction_type_id' => 3, // Win Reward
-                        'coins' => $coinsTotal,
-                        'transaction_datetime' => now()
+                        'coins'                    => $coinsTotal,
+                        'transaction_datetime'     => now(),
                     ]);
 
                     // Saldo e Counts
                     $userQuery = DB::table('users')->where('id', $winnerId);
                     $userQuery->increment('coins_balance', $coinsTotal);
 
-                    if ($updateCapoteCount) $userQuery->increment('capote_count');
-                    if ($updateBandeiraCount) $userQuery->increment('bandeira_count');
+                    if ($updateCapoteCount) {
+                        $userQuery->increment('capote_count');
+                    }
+
+                    if ($updateBandeiraCount) {
+                        $userQuery->increment('bandeira_count');
+                    }
+
                 }
             });
 
             return response()->json([
-                'message' => 'Match saved with history',
-                'coins_earned' => $coinsTotal
+                'message'      => 'Match saved with history',
+                'coins_earned' => $coinsTotal,
             ], 200);
 
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error("EndMatch Error: ".$e->getMessage());
+            \Illuminate\Support\Facades\Log::error("EndMatch Error: " . $e->getMessage());
             return response()->json(['error' => 'Server error'], 500);
         }
     }
@@ -119,19 +128,21 @@ class MatchController extends Controller
         // 1. Autenticar o usuário
         $user = User::where('email', $email)->first();
 
-        if (!$user) return response()->json(['error' => 'User not found'], 404);
+        if (! $user) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
 
         // --- PROCURA O BOT ---
         $bot = User::where('email', "bot@mail.pt")->first();
 
         // Se o bot não existir, cria um para não dar erro 500
-        if (!$bot) {
+        if (! $bot) {
             $bot = User::create([
-                'name' => 'Bot Jamal',
-                'email' => 'bot@mail.pt',
-                'password' => bcrypt('botpass'),
-                'type' => 'P',
-                'coins_balance' => 0
+                'name'          => 'Bot Jamal',
+                'email'         => 'bot@mail.pt',
+                'password'      => bcrypt('botpass'),
+                'type'          => 'P',
+                'coins_balance' => 0,
             ]);
         }
 
@@ -142,7 +153,7 @@ class MatchController extends Controller
             // Cenário de Insufficient Coins [cite: 34]
             return response()->json([
                 'message' => 'Insufficient coins',
-                'error' => true
+                'error'   => true,
             ], 403);
         }
 
@@ -155,27 +166,27 @@ class MatchController extends Controller
 
             // Criar partida
             $matchId = DB::table('matches')->insertGetId([
-                'type' => '9',
+                'type'            => '9',
                 'player1_user_id' => $user->id,
 
                 // AGORA ISTO JÁ NÃO FALHA
                 'player2_user_id' => $bot->id,
 
-                'status' => 'Playing',
-                'stake' => $entryFee,
-                'began_at' => now(),
-                'player1_marks' => 0,
-                'player2_marks' => 0,
-                'player1_points' => 0,
-                'player2_points' => 0,
+                'status'          => 'Playing',
+                'stake'           => $entryFee,
+                'began_at'        => now(),
+                'player1_marks'   => 0,
+                'player2_marks'   => 0,
+                'player1_points'  => 0,
+                'player2_points'  => 0,
             ]);
 
             DB::commit();
 
             return response()->json([
-                'message' => 'Match started successfully',
+                'message'     => 'Match started successfully',
                 'new_balance' => $user->coins_balance,
-                'match_id' => $matchId,
+                'match_id'    => $matchId,
             ], 200);
 
         } catch (\Exception $e) {
@@ -190,8 +201,8 @@ class MatchController extends Controller
     {
         // 1. Busca todos os registros da tabela 'matches'
         $matches = DB::table('matches')
-                    ->orderBy('began_at', 'desc') // Ordenar do mais recente para o mais antigo
-                    ->get();
+            ->orderBy('began_at', 'desc') // Ordenar do mais recente para o mais antigo
+            ->get();
 
         // 2. Retorna a coleção de matches
         if ($matches->isEmpty()) {
@@ -201,6 +212,56 @@ class MatchController extends Controller
         return response()->json(['matches' => $matches], 200);
     }
 
+    // GET /api/matches/user
+    public function userMatches(Request $request)
+    {
+        // Usa o utilizador autenticado (token / Sanctum)
+        $userId = $request->user()->id;
+
+        // Vai buscar as matches onde o player participou
+        // e conta quantos games existem em cada match
+        $matches = MatchGame::withCount('games')
+            ->where(function ($q) use ($userId) {
+                $q->where('player1_user_id', $userId)
+                    ->orWhere('player2_user_id', $userId);
+            })
+            ->orderBy('began_at', 'desc')
+            ->get();
+
+        // Se não houver matches, devolve lista vazia
+        if ($matches->isEmpty()) {
+            return response()->json([
+                'message' => 'Nenhuma partida encontrada.',
+                'data'    => [],
+            ], 200);
+        }
+
+        return response()->json([
+            'data' => $matches,
+        ], 200);
+    }
+
+    // GET /api/matches/{id}/games
+    public function matchGames($matchId)
+    {
+        // Verifica se a match existe
+        $match = MatchGame::find($matchId);
+
+        if (! $match) {
+            return response()->json(['message' => 'Match not found'], 404);
+        }
+
+        // Buscar os games desta match APENAS PELO CAMPOS match_id (simples)
+        $games = Game::where('match_id', $matchId)
+            ->orderBy('began_at', 'asc')
+            ->get();
+
+        return response()->json([
+            'match' => $match,
+            'games' => $games,
+        ], 200);
+    }
+
     // POST /api/matches/undo
     public function undoPlay(Request $request)
     {
@@ -208,21 +269,21 @@ class MatchController extends Controller
         $request->validate([
             'email'    => 'required|email',
             'match_id' => 'required|integer|exists:matches,id', // Garante que o match existe na BD
-            'cost'     => 'required|integer|in:5,10,15'         // Segurança: Só aceita os valores da regra (5, 10, 15)
+            'cost'     => 'required|integer|in:5,10,15',        // Segurança: Só aceita os valores da regra (5, 10, 15)
         ]);
 
         // 2. Buscar Utilizador
         $user = User::where('email', $request->email)->first();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json(['message' => 'User not found'], 404);
         }
 
         // 3. Verificar Saldo
         if ($user->coins_balance < $request->cost) {
             return response()->json([
-                'message' => 'Saldo insuficiente',
-                'current_balance' => $user->coins_balance
+                'message'         => 'Saldo insuficiente',
+                'current_balance' => $user->coins_balance,
             ], 403);
         }
 
@@ -243,17 +304,17 @@ class MatchController extends Controller
                     'coins'                    => -($request->cost), // Garante que fica negativo na BD
                     'transaction_datetime'     => now(),
                     'custom'                   => json_encode([
-                        'type' => 'undo_play',
-                        'cost' => $request->cost,
-                        'description' => 'Player retried a move'
-                    ])
+                        'type'        => 'undo_play',
+                        'cost'        => $request->cost,
+                        'description' => 'Player retried a move',
+                    ]),
                 ]);
             });
 
             // 5. Retornar sucesso e o novo saldo atualizado
             return response()->json([
                 'message'     => 'Undo successful',
-                'new_balance' => $user->fresh()->coins_balance // fresh() garante que pega o valor atualizado da BD
+                'new_balance' => $user->fresh()->coins_balance, // fresh() garante que pega o valor atualizado da BD
             ], 200);
 
         } catch (\Exception $e) {
@@ -263,6 +324,5 @@ class MatchController extends Controller
             return response()->json(['error' => 'Server error processing undo'], 500);
         }
     }
-
 
 }

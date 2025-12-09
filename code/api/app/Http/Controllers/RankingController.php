@@ -4,40 +4,99 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class RankingController extends Controller
 {
-    public function globalRanking()
+    public function globalRanking(Request $request)
     {
-        // 1. TOP 10 WINS (Vitórias)
-        $topWins = User::withCount('gamesWon as wins')
-            ->orderByDesc('wins')
-            ->take(10)
-            ->get(['id', 'name', 'nickname', 'avatar']);
+        return new StreamedResponse(function () {
 
-        // 2. TOP 10 COINS (Moedas)
-        $topCoins = User::select(['id', 'name', 'nickname', 'avatar', 'coins_balance']) // <--- Aqui
-            ->orderByDesc('coins_balance') // <--- E Aqui
-            ->take(10)
-            ->get();
+            echo '{';
 
-        // 3. TOP 10 ACHIEVEMENTS (Soma de Capote + Bandeira)
-        // A Lógica de Ouro está aqui:
-        $topAchievements = User::select(['id', 'name', 'nickname', 'avatar', 'capote_count', 'bandeira_count'])
-            // Cria uma coluna virtual 'total' somando as duas
-            // COALESCE garante que se for null conta como 0
-            ->selectRaw('(COALESCE(capote_count, 0) + COALESCE(bandeira_count, 0)) as total_achievements')
-            // Ordena por essa coluna virtual
-            ->orderByDesc('total_achievements')
-            // Critério de desempate: quem tem mais bandeiras ganha
-            ->orderByDesc('bandeira_count')
-            ->take(10)
-            ->get();
+            // ================================
+            // WINS
+            // ================================
+            echo '"wins":{"data":[';
 
-        return response()->json([
-            'wins'         => $topWins,
-            'coins'        => $topCoins,
-            'achievements' => $topAchievements,
+            $first = true;
+
+            User::withCount('gamesWon as wins')
+                ->orderByDesc('wins')
+                ->chunk(500, function ($users) use (&$first) {
+                    foreach ($users as $u) {
+                        if (!$first) echo ',';
+                        $first = false;
+
+                        echo json_encode([
+                            'id'    => $u->id,
+                            'name'  => $u->name,
+                            'nickname' => $u->nickname,
+                            'wins'  => $u->wins,
+                        ]);
+                    }
+                });
+
+            echo ']},';
+
+            // ================================
+            // COINS
+            // ================================
+            echo '"coins":{"data":[';
+
+            $first = true;
+
+            User::orderByDesc('coins_balance')
+                ->chunk(500, function ($users) use (&$first) {
+                    foreach ($users as $u) {
+                        if (!$first) echo ',';
+                        $first = false;
+
+                        echo json_encode([
+                            'id'    => $u->id,
+                            'name'  => $u->name,
+                            'nickname' => $u->nickname,
+                            'coins_balance' => $u->coins_balance,
+                        ]);
+                    }
+                });
+
+            echo ']},';
+
+            // ================================
+            // ACHIEVEMENTS
+            // ================================
+            echo '"achievements":{"data":[';
+
+            $first = true;
+
+            User::select('id', 'name', 'nickname', 'capote_count', 'bandeira_count')
+                ->selectRaw('(COALESCE(capote_count,0) + COALESCE(bandeira_count,0)) AS total')
+                ->orderByDesc('total')
+                ->orderByDesc('bandeira_count')
+                ->chunk(500, function ($users) use (&$first) {
+                    foreach ($users as $u) {
+                        if (!$first) echo ',';
+                        $first = false;
+
+                        echo json_encode([
+                            'id'    => $u->id,
+                            'name'  => $u->name,
+                            'nickname' => $u->nickname,
+                            'capoteCount'   => $u->capote_count,
+                            'bandeiraCount' => $u->bandeira_count,
+                            'total'         => $u->total,
+                        ]);
+                    }
+                });
+
+            echo ']}';
+
+            echo '}';
+
+        }, 200, [
+            "Content-Type" => "application/json; charset=UTF-8",
+            "Cache-Control" => "no-cache"
         ]);
     }
 }

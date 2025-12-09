@@ -20,6 +20,7 @@ class MatchGame extends Model
         'winner_user_id',
         'loser_user_id',
         'status',
+        'coins_earned',
         'stake',
         'began_at',
         'ended_at',
@@ -49,5 +50,10 @@ class MatchGame extends Model
     public function player2()
     {
         return $this->belongsTo(User::class, 'player2_user_id');
+    }
+
+    public function games()
+    {
+        return $this->hasMany(Game::class, 'match_id');
     }
 }
