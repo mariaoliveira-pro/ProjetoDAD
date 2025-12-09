@@ -32,8 +32,8 @@ class UsersSeeder extends Seeder
         ['type' => 'P', 'name' => 'Player D', 'email' => 'pd@mail.pt', 'gender' => 'M', 'softdelete' => true],
         ['type' => 'P', 'name' => 'Player E', 'email' => 'pe@mail.pt', 'gender' => 'F', 'softdelete' => false],
         ['type' => 'P', 'name' => 'Player F', 'email' => 'pf@mail.pt', 'gender' => 'M', 'softdelete' => true],
-
-        ['type' => 'P', 'name' => 'Bisca Bot', 'email' => 'bot@bisca.pt', 'gender' => 'M', 'softdelete' => false, 'nickname' => 'Bot Jamal'],
+        
+        ['type' => 'P', 'name' => 'Bisca Bot', 'email' => 'bot@mail.pt', 'gender' => 'M', 'softdelete' => false, 'nickname' => 'Bot Jamal'],
         // O teu user de teste (para teres a certeza que existe na lista fixa)
         ['type' => 'P', 'name' => 'Aluno Teste', 'email' => 'aluno@ipleiria.pt', 'gender' => 'M', 'softdelete' => false],
         ['type'=> 'P', 'name' => 'Jogador Pobre', 'email'=> 'pobre@ipleiria.pt', 'gender' => 'M', 'softdelete'=> false],
@@ -135,7 +135,7 @@ class UsersSeeder extends Seeder
 
             if ($user['email'] === 'aluno@ipleiria.pt') {
                 // User de teste: moedas e stats fixos para validares a ordenação
-                $usersAdded[$key]['coins_balance'] = 70;
+                $usersAdded[$key]['coins_balance'] = 200;
                 $usersAdded[$key]['capote_count'] = 10;
                 $usersAdded[$key]['bandeira_count'] = 5;
             }else if ($user['email'] === 'pobre@ipleiria.pt') {
