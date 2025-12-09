@@ -60,6 +60,7 @@ class InitialTransactionsSeeder extends Seeder
         ->where('type', 'P')
         ->where('email', '!=', 'aluno@ipleiria.pt')
         ->where('email', '!=', 'pobre@ipleiria.pt')
+        ->where('email', '!=', 'rico@mail.pt')
         ->update(['coins_balance' => $this->valueOfInitialBonus]);
         $this->command->info("Updated all players initial Balance");
     }

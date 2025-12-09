@@ -25,7 +25,7 @@ class UsersSeeder extends Seeder
         ['type' => 'A', 'name' => 'Second Administrator', 'email' => 'a2@mail.pt', 'gender' => 'F', 'softdelete' => false],
         ['type' => 'A', 'name' => 'Third Administrator', 'email' => 'a3@mail.pt', 'gender' => 'M', 'softdelete' => false],
         ['type' => 'A', 'name' => 'Forth Administrator', 'email' => 'a4@mail.pt', 'gender' => 'M', 'softdelete' => true],
-        
+
         ['type' => 'P', 'name' => 'Player A', 'email' => 'pa@mail.pt', 'gender' => 'M', 'softdelete' => false],
         ['type' => 'P', 'name' => 'Player B', 'email' => 'pb@mail.pt', 'gender' => 'M', 'softdelete' => false],
         ['type' => 'P', 'name' => 'Player C', 'email' => 'pc@mail.pt', 'gender' => 'F', 'softdelete' => false],
@@ -37,6 +37,7 @@ class UsersSeeder extends Seeder
         // O teu user de teste (para teres a certeza que existe na lista fixa)
         ['type' => 'P', 'name' => 'Aluno Teste', 'email' => 'aluno@ipleiria.pt', 'gender' => 'M', 'softdelete' => false],
         ['type'=> 'P', 'name' => 'Jogador Pobre', 'email'=> 'pobre@ipleiria.pt', 'gender' => 'M', 'softdelete'=> false],
+        ['type' => 'P', 'name' => 'Bot Rico', 'email' => 'rico@mail.pt', 'gender' => 'F', 'softdelete' => false],
 
         //bot jamals
         ['type' => 'P', 'name' => 'Bot Jamal', 'email' => 'bot@mail.pt', 'gender' => 'M', 'softdelete' => false],
@@ -142,7 +143,13 @@ class UsersSeeder extends Seeder
                 $usersAdded[$key]['coins_balance'] = 0;
                 $usersAdded[$key]['capote_count'] = 0;
                 $usersAdded[$key]['bandeira_count'] = 0;
-            }else {
+            }else if ($user['email'] === 'rico@mail.pt'){
+                // User rico: Muitas moedas e conquistas
+                $usersAdded[$key]['coins_balance'] = 9999;
+                $usersAdded[$key]['capote_count'] = 50;
+                $usersAdded[$key]['bandeira_count'] = 20;
+            }
+            else {
                 // Outros users: Valores aleatórios para dar variedade ao ranking
                 $usersAdded[$key]['coins_balance'] = mt_rand(50, 500);
                 $usersAdded[$key]['capote_count'] = mt_rand(0, 20);

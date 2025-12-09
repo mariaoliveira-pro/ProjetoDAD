@@ -262,6 +262,7 @@ class GamesTransactionsSeeder extends Seeder
             ->where('id', $user->id)
             ->where('email', '!=', 'aluno@ipleiria.pt')
             ->where('email', '!=', 'pobre@ipleiria.pt')
+            ->where('email', '!=', 'rico@mail.pt')
             ->update(['coins_balance' => $user->coins_balance]);
         }
         $this->command->info("All users balances updated.");

@@ -276,8 +276,12 @@ return new class extends Migration
         // --- NOVO: POPULAR A LOJA ---
         DB::table('shop_items')->insert([
             // Decks
-            ['type' => 'deck', 'name' => 'Deck Clássico', 'resource_name' => 'deck1_preview', 'price' => 0],
+            ['type' => 'deck', 'name' => 'Deck Classic', 'resource_name' => 'deck1_preview', 'price' => 0],
             ['type' => 'deck', 'name' => 'Deck DAD', 'resource_name' => 'deck2_preview', 'price' => 50],
+            ['type' => 'deck', 'name' => 'Deck Hello Kitty', 'resource_name' => 'deck3_preview', 'price' => 150],
+            ['type' => 'deck', 'name' => 'Deck Tree', 'resource_name' => 'deck4_preview', 'price' => 100],
+
+
             //colocar mais decks no futuro
 
             // Avatares
