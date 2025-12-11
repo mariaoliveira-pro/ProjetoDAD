@@ -280,6 +280,8 @@ return new class extends Migration
             ['type' => 'deck', 'name' => 'Deck DAD', 'resource_name' => 'deck2_preview', 'price' => 50],
             ['type' => 'deck', 'name' => 'Deck Hello Kitty', 'resource_name' => 'deck3_preview', 'price' => 150],
             ['type' => 'deck', 'name' => 'Deck Tree', 'resource_name' => 'deck4_preview', 'price' => 100],
+            ['type' => 'deck', 'name' => 'Damas e Valetes', 'resource_name' => 'deck5_preview', 'price' => 278],
+
 
 
             //colocar mais decks no futuro
@@ -291,6 +293,14 @@ return new class extends Migration
             ['type' => 'avatar', 'name' => 'Beard Guy', 'resource_name' => 'avatar4', 'price' => 30],
             ['type' => 'avatar', 'name' => 'Bald Guy', 'resource_name' => 'avatar5', 'price' => 10],
             ['type' => 'avatar', 'name' => 'Guy', 'resource_name' => 'avatar6', 'price' => 90],
+            ['type' => 'avatar', 'name' => 'Braid Girl', 'resource_name' => 'avatar7', 'price' => 70],
+            ['type' => 'avatar', 'name' => 'Rock Guy', 'resource_name' => 'avatar8', 'price' => 50],
+            ['type' => 'avatar', 'name' => 'Duck', 'resource_name' => 'avatar9', 'price' => 100],
+            ['type' => 'avatar', 'name' => 'André', 'resource_name' => 'avatar10', 'price' => 200],
+            ['type' => 'avatar', 'name' => 'Matilde', 'resource_name' => 'avatar11', 'price' => 200],
+            ['type' => 'avatar', 'name' => 'Maria', 'resource_name' => 'avatar12', 'price' => 200],
+            ['type' => 'avatar', 'name' => 'Leonardo', 'resource_name' => 'avatar13', 'price' => 200],
+
         ]);
     }
     /**
