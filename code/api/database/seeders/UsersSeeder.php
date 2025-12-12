@@ -38,6 +38,7 @@ class UsersSeeder extends Seeder
         ['type' => 'P', 'name' => 'Aluno Teste', 'email' => 'aluno@ipleiria.pt', 'gender' => 'M', 'softdelete' => false],
         ['type'=> 'P', 'name' => 'Jogador Pobre', 'email'=> 'pobre@ipleiria.pt', 'gender' => 'M', 'softdelete'=> false],
         ['type' => 'P', 'name' => 'Jogador Rico', 'email' => 'rico@mail.pt', 'gender' => 'F', 'softdelete' => false],
+        ['type' => 'P', 'name' => 'Verificar Coins', 'email' => 'coins@ipleiria.pt', 'gender' => 'F', 'softdelete' => false],
 
         //bot jamals
         ['type' => 'P', 'name' => 'Bot Jamal', 'email' => 'bot@mail.pt', 'gender' => 'M', 'softdelete' => false],
