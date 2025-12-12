@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Game;
+use App\Models\GameMove;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class GameController extends Controller
 {
@@ -101,7 +103,7 @@ class GameController extends Controller
         }
 
         // Verifica se o bot existe (podes usar o email que tens na BD)
-        $botUser = User::where('email', "bot@bisca.pt")->first(); // ou bot@mail.pt conforme tenhas
+        $botUser = User::where('email', "bot@mail.pt")->first(); // ou bot@mail.pt conforme tenhas
         if (!$botUser) {
             // Fallback: Tenta encontrar pelo ID ou cria (opcional, mas evita erros 500)
              return response()->json(['error' => 'Bot configuration missing'], 500);
@@ -188,10 +190,35 @@ class GameController extends Controller
 
     /**
      * Display the specified resource.
+     * GET /api/games/{id}
      */
-    public function show(Game $game)
+    public function show($id)
     {
-        //
+        try {
+            // 1. Buscar o Jogo
+            $game = Game::find($id);
+
+            if (!$game) {
+                return response()->json(['message' => 'Game not found'], 404);
+            }
+
+            // 2. Buscar as Vazas (Moves) associadas
+            // Certifica-te que tens "use App\Models\GameMove;" no topo do ficheiro
+            $moves = GameMove::where('game_id', $id)
+                        ->orderBy('round_number', 'asc')
+                        ->get();
+
+            // 3. Juntar tudo na mesma resposta
+            // Converte o jogo em array e adiciona os moves
+            $responseData = $game->toArray();
+            $responseData['moves'] = $moves;
+
+            return response()->json($responseData, 200);
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Erro ao mostrar jogo $id: " . $e->getMessage());
+            return response()->json(['error' => 'Server error'], 500);
+        }
     }
 
     /**
@@ -209,4 +236,5 @@ class GameController extends Controller
     {
         //
     }
+    
 }

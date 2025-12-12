@@ -49,6 +49,10 @@ Route::post('/matches/undo', [MatchController::class, 'undoPlay']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/matches/user', [MatchController::class, 'userMatches']);
-    Route::get('/matches/{id}/games', [MatchController::class, 'matchGames']);
+    
 });
+
+Route::get('/matches/{id}/games', [MatchController::class, 'matchGames']);
+
+
 
