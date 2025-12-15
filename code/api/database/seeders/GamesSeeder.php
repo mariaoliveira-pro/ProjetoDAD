@@ -79,35 +79,59 @@ class GamesSeeder extends Seeder
                 $this->nextGameDateTime($d, $filteredPlayers);
                 continue;
             }
+
             $match = null;
+
             if (rand(1, $this->ratioStandaloneToMatch) === 1) {
                 $match = $this->newMatch($filteredPlayers, $userIDPlayer1, $userIDPlayer2, $d);
                 $playersMarks = [0, 0];
                 $playersPoints = [0, 0];
+
+                // --- NOVO: Rastrear Achievements durante a partida ---
+                $p1HasCapote = false;
+                $p1HasBandeira = false;
+                $p2HasCapote = false;
+                $p2HasBandeira = false;
+
+
                 while($playersMarks[0] < 4 && $playersMarks[1] <4) {
                     $newGame = $this->newGame($filteredPlayers, $match, $userIDPlayer1, $userIDPlayer2, $d);
                     $games[] = $newGame;
                     $playersPoints[0] += $newGame['player1_points'];
                     $playersPoints[1] += $newGame['player2_points'];
+
                     if ($newGame['player1_points'] > $newGame['player2_points']) {
                         if ($newGame['player1_points'] >= 120) {
                             $playersMarks[0]+= 4;
+                            $p1HasBandeira = true; // Bandeira P1
                         } elseif ($newGame['player1_points'] >= 91) {
                             $playersMarks[0] += 2;
+                            $p1HasCapote = true;   // Capote P1
                         } else {
                             $playersMarks[0]++;
                         }
                     } elseif ($newGame['player2_points'] > $newGame['player1_points']) {
                         if ($newGame['player2_points'] >= 120) {
                             $playersMarks[1]+= 4;
+                            $p2HasBandeira = true; // Bandeira P2
                         } elseif ($newGame['player2_points'] >= 91) {
                             $playersMarks[1] += 2;
+                            $p2HasCapote = true;   // Capote P2
                         } else {
                             $playersMarks[1]++;
                         }
                     }
                 }
-                $this->updateMatchWinner($match, $playersMarks[0], $playersMarks[1], $playersPoints[0], $playersPoints[1], $d);
+
+                // Passar as flags para calcular a recompensa final
+                $this->updateMatchWinner(
+                    $match,
+                    $playersMarks[0], $playersMarks[1],
+                    $playersPoints[0], $playersPoints[1],
+                    $d,
+                    $p1HasCapote, $p1HasBandeira, $p2HasCapote, $p2HasBandeira
+                );
+
                 $matches[] = $match;
             } else {
                 $newGame = $this->newGame($filteredPlayers, $match, $userIDPlayer1, $userIDPlayer2, $d);
@@ -161,11 +185,13 @@ class GamesSeeder extends Seeder
             'player2_marks' => null,
             'player1_points' => null,
             'player2_points' => null,
+            'coins_reward' => 0, // Default 0
             'custom' => null
         ];
     }
 
-    private function updateMatchWinner(&$match, $player1Marks, $player2Marks, $totalPlayers1, $totalPlayers2, $d)
+    private function updateMatchWinner(&$match, $player1Marks, $player2Marks, $totalPlayers1, $totalPlayers2, $d
+        , $p1Capote, $p1Bandeira, $p2Capote, $p2Bandeira)
     {
         $match['player1_marks'] = $player1Marks;
         $match['player2_marks'] = $player2Marks;
@@ -173,8 +199,38 @@ class GamesSeeder extends Seeder
         $match['player2_points'] = $totalPlayers2;
         $match['ended_at'] = $d->copy();
         $match['total_time'] = $match['began_at']->diffInSeconds($match['ended_at']);
-        $match['winner_user_id'] = $player1Marks > $player2Marks ? $match['player1_user_id'] : ($player2Marks > $player1Marks ? $match['player2_user_id'] : null);
-        $match['loser_user_id'] = $player1Marks > $player2Marks ? $match['player2_user_id'] : ($player2Marks > $player1Marks ? $match['player1_user_id'] : null);
+
+        $winnerId = null;
+        if ($player1Marks > $player2Marks) {
+            $winnerId = $match['player1_user_id'];
+            $match['winner_user_id'] = $winnerId;
+            $match['loser_user_id'] = $match['player2_user_id'];
+        } elseif ($player2Marks > $player1Marks) {
+            $winnerId = $match['player2_user_id'];
+            $match['winner_user_id'] = $winnerId;
+            $match['loser_user_id'] = $match['player1_user_id'];
+        } else {
+            $match['winner_user_id'] = null;
+            $match['loser_user_id'] = null;
+        }
+
+        // --- CÁLCULO DE MOEDAS CORRIGIDO ---
+        // Apenas o Player 1 recebe recompensa se ganhar.
+        $coins = 0;
+
+        // Se o Player 1 ganhou (tendo mais marcas)
+        if ($match['player1_marks'] > $match['player2_marks']) {
+            $coins = 50; // Base Reward
+
+            // Bónus apenas se foi o Player 1 a fazer os achievements
+            if ($p1Capote) $coins += 20;
+            if ($p1Bandeira) $coins += 30;
+        }
+
+        // Se o Player 1 perdeu ($match['player1_marks'] < $match['player2_marks']),
+        // o coins_reward fica a 0.
+
+        $match['coins_reward'] = $coins;
     }
 
     private $gameID = 0;
